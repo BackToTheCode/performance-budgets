@@ -6,29 +6,29 @@
         "resourceSizes": [
           {
             "resourceType": "script",
-            "budget": 50
+            "budget": 400
           },
           {
             "resourceType": "image",
-            "budget": 10
+            "budget": 110
           },
           {
             "resourceType": "third-party",
-            "budget": 40
-          },
-          {
-            "resourceType": "total",
             "budget": 500
           },
           {
+            "resourceType": "total",
+            "budget": 600
+          },
+          {
             "resourceType": "stylesheet",
-            "budget": 200
+            "budget": 50
           }
         ],
         "resourceCounts": [
           {
             "resourceType": "third-party",
-            "budget": 60
+            "budget": 65
           },
           {
             "resourceType": "stylesheet",
@@ -36,11 +36,12 @@
           },
           {
             "resourceType": "total",
-            "budget": 50
+            "budget": 80
           }
         ]
       }
     ]
   },
-  "isCustom": false
+
+  "isCustom": true
 }

@@ -1,0 +1,7 @@
+{
+  "audits": [
+    { "id": "first-meaningful-paint", "timeBudget": 5000 },
+    { "id": "speed-index", "timeBudget": 5000 },
+    { "id": "interactive", "timeBudget": 7000 }
+  ]
+}

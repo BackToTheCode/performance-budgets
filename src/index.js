@@ -1,6 +1,7 @@
 const lighthouseBudgets = require("./lib/");
 
 const main = async () => {
+  debugger;
   try {
     await lighthouseBudgets();
     process.exit(0);
