@@ -3,9 +3,14 @@ const chromeLauncher = require("chrome-launcher");
 const fs = require("fs-extra");
 const path = require("path");
 const chalk = require("chalk");
+const argv = require("yargs").argv;
 const log = console.log;
 
-const getLightHouseConfig = () => {
+const getLightHouseConfig = configOverride => {
+  if (configOverride)
+    return fs.readJSONSync(
+      path.resolve(__dirname, "../config-override/lighthouse.json")
+    );
   return fs.readJSONSync(path.resolve(__dirname, "../config/lighthouse.json"));
 };
 
@@ -16,7 +21,9 @@ function launchChromeAndRunLighthouse(url, opts, config = null) {
       opts.port = chrome.port;
       opts.output = "json";
 
-      const { isCustom, ...lightHouseConfig } = getLightHouseConfig();
+      const { isCustom, ...lightHouseConfig } = getLightHouseConfig(
+        opts.configOverride
+      );
 
       if (!isCustom) {
         log(`
@@ -46,7 +53,8 @@ const opts = {
 
 const main = async () => {
   try {
-    const url = process.argv[2];
+    const configOverride = argv.configOverride;
+    const url = argv.url;
 
     if (!url) {
       log(chalk.red("Please provide a url"));
@@ -55,7 +63,10 @@ const main = async () => {
 
     log(`Requesting lighthouse data for ${chalk.green(url)}`);
 
-    const data = await launchChromeAndRunLighthouse(url, opts);
+    const data = await launchChromeAndRunLighthouse(url, {
+      ...opts,
+      configOverride
+    });
 
     // Performance
     const speedResults = data["audits"];

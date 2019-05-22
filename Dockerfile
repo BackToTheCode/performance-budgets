@@ -1,6 +1,6 @@
 FROM node:10-slim
 
-LABEL maintainer="David Boyne <boyney123@>"
+LABEL maintainer="James Tuckett <dockerjwrt@>"
 
 WORKDIR /usr/src/performance-budgets
 
