@@ -9,10 +9,6 @@ const getLightHouseConfig = () => {
   return fs.readJSONSync(path.resolve(__dirname, "../config/lighthouse.json"));
 };
 
-const getAuditBudgets = () => {
-  return fs.readJSONSync(path.resolve(__dirname, "../config/audit.json"));
-};
-
 function launchChromeAndRunLighthouse(url, opts, config = null) {
   return chromeLauncher
     .launch({ chromeFlags: opts.chromeFlags })
@@ -59,68 +55,62 @@ const main = async () => {
 
     log(`Requesting lighthouse data for ${chalk.green(url)}`);
 
-    const { isCustom, ...lightHouseConfig } = getLightHouseConfig();
-    const auditConfig = getAuditBudgets();
     const data = await launchChromeAndRunLighthouse(url, opts);
 
     // Performance
-    const { audits: speedAudits } = auditConfig;
-    const { audits: auditResults } = data;
-    speedAudits.forEach(audit => {
-      if (
-        auditResults.hasOwnProperty(audit.id) &&
-        auditResults[audit.id].hasOwnProperty("numericValue")
-      ) {
+    const speedResults = data["audits"];
+    const bundleResults = data["audits"]["performance-budget"];
+    const speedBudgets = data["configSettings"]["speedBudgets"];
 
-        const overBudget =
-          auditResults[audit.id].numericValue - audit.timeBudget;
-        audit.actualSpeed = auditResults[audit.id].numericValue;
+    Object.keys(speedResults).forEach(key => {
+      const audit = speedResults[key];
+      if (audit.hasOwnProperty("numericValue")) {
+        const overBudget = audit.numericValue - speedBudgets[audit.id];
+        audit.timeBudget = speedBudgets[audit.id];
         audit.overBudgetBy = overBudget > 0 ? overBudget : undefined;
       }
     });
 
-    const successfulSpeedAudits = speedAudits.filter(
-      ({ overBudgetBy }) => !overBudgetBy
-    );
+    const successfulSpeedAudits = Object.keys(speedResults).filter(key => {
+      return !speedResults[key].overBudgetBy;
+    });
 
     // Bundle limits and requests
-    const budgets = data["audits"]["performance-budget"];
-
-    const { details: { items = [] } = {} } = budgets;
-    const successfulBudgets = items.filter(
+    const { details: { items = [] } = {} } = bundleResults;
+    const successfulBundleAudits = items.filter(
       ({ sizeOverBudget, countOverBudget }) => {
         return !sizeOverBudget && !countOverBudget;
       }
     );
 
     const isValid =
-      successfulBudgets.length === items.length &&
-      successfulSpeedAudits.length === speedAudits.length;
+      successfulBundleAudits.length === items.length &&
+      successfulSpeedAudits.length === Object.keys(speedResults).length;
 
     if (!isValid) {
-      const failedSpeedAudits = speedAudits.filter(
-        ({ overBudgetBy }) => overBudgetBy
-      );
+      const failedSpeedAudits = Object.keys(speedResults).filter(key => {
+        return speedResults[key].overBudgetBy;
+      });
 
-      const failedRequestCountAudits = failedBudgets.filter(
+      const failedRequestCountAudits = items.filter(
         audit => audit.countOverBudget !== undefined
       );
 
-      const failedSizeAudits = failedAudits.filter(
+      const failedBundleAudits = items.filter(
         audit => audit.sizeOverBudget !== undefined
       );
 
       if (failedSpeedAudits.length) {
         log(chalk.red("----- Failed page speed budget audits ------"));
-        failedSpeedAudits.forEach(
-          ({ id, timeBudget, overBudgetBy, actualSpeed } = {}) => {
-            log(
-              `${chalk.green(id)}: Expected ${chalk.green(
-                timeBudget
-              )} ms but got ${chalk.red(actualSpeed)}`
-            );
-          }
-        );
+        failedSpeedAudits.forEach(key => {
+          const { id, numericValue, timeBudget } = speedResults[key];
+          const actual = Math.round(numericValue);
+          log(
+            `${chalk.green(id)}: Expected less than ${chalk.green(
+              timeBudget
+            )} ms but got ${chalk.red(actual)} ms`
+          );
+        });
       }
 
       if (failedRequestCountAudits.length) {
@@ -144,9 +134,9 @@ const main = async () => {
         );
       }
 
-      if (failedSizeAudits.length) {
+      if (failedBundleAudits.length) {
         log(chalk.red("----- Failed resource size budget audits ------"));
-        failedSizeAudits.forEach(
+        failedBundleAudits.forEach(
           ({
             label,
             requestCount,

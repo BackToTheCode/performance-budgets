@@ -1,12 +1,23 @@
 {
   "extends": "lighthouse:full",
   "settings": {
+    "speedBudgets": {
+      "first-meaningful-paint": 1000,
+      "speed-index": 1000,
+      "interactive": 7000
+    },
+    "onlyAudits": [
+      "first-meaningful-paint",
+      "speed-index",
+      "interactive",
+      "performance-budget"
+    ],
     "budgets": [
       {
         "resourceSizes": [
           {
             "resourceType": "script",
-            "budget": 400
+            "budget": 10
           },
           {
             "resourceType": "image",
