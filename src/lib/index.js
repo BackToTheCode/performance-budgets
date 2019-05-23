@@ -3,14 +3,15 @@ const chromeLauncher = require("chrome-launcher");
 const fs = require("fs-extra");
 const path = require("path");
 const chalk = require("chalk");
-const argv = require("yargs").argv;
 const log = console.log;
 
 const getLightHouseConfig = configOverride => {
-  if (configOverride)
+  if(fs.existsSync(path.resolve(__dirname, "../config-override/lighthouse.json"))) {
     return fs.readJSONSync(
       path.resolve(__dirname, "../config-override/lighthouse.json")
     );
+  }
+
   return fs.readJSONSync(path.resolve(__dirname, "../config/lighthouse.json"));
 };
 
@@ -53,9 +54,8 @@ const opts = {
 
 const main = async () => {
   try {
-    const configOverride = argv.configOverride;
-    const url = argv.url;
-
+    const url = process.argv[2];
+    
     if (!url) {
       log(chalk.red("Please provide a url"));
       return Promise.reject("Please provide a valid url");
